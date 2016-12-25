@@ -1,10 +1,10 @@
-include content/about.pug
+include content/project.pug
 
 doctype html
 html
   include includes/head.pug
   body
-    #page.about
+    #page.project
       include includes/nav.pug
       header.fh5co-cover(id="fh5co-header", role="banner", style="background-image:url(img/img_bg_2.jpg);", data-stellar-background-ratio="0.5")
         .overlay
@@ -17,7 +17,7 @@ html
                   h2 #{subTagline}
                     a(href=subTagLink, target="_blank") &nbsp;#{subTagLabel}
       include includes/counter.pug
-      include includes/aboutSection.pug
+      include includes/projectSection.pug
       include includes/testimonial.pug
       include includes/footer.pug
     .gototop.js-top

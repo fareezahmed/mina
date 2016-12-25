@@ -1,0 +1,16 @@
+#fh5co-blog
+  .container
+    .row.animate-box
+      .col-md-8.col-md-offset-2.text-center.fh5co-heading
+        h2 #{sectionTitle}
+        p #{sectionDescription}
+    .row
+      each item in eventList
+        .col-lg-4.col-md-4
+          a
+            img.img-responsive(src=item.image alt=item.alt)
+          .blog-text
+            h3
+              a #{item.title}
+            span #{item.date}
+            p #{item.desc}

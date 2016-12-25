@@ -1,0 +1,39 @@
+#fh5co-explore.fh5co-bg-section
+  .container
+    .row.animate-box
+      .col-md-6.col-md-offset-3.text-center.fh5co-heading
+        h2 Our Projects
+        p #{aboutShortDescription}
+  .fh5co-explore.fh5co-explore1
+    .container
+      .row
+        .col-md-8.col-md-push-5.animate-box
+          img.img-responsive(src="img/work_1.jpg", alt="work")
+        .col-md-4.col-md-pull-8.animate-box
+          .mt
+            h3 #{subHeader1}
+            p #{subDescription1}
+            ul.list-nav
+              each val in subList1
+                li=val
+                  i.icon-check2
+  .fh5co-explore
+    .container
+      .row
+        .col-md-8.col-md-pull-1.animate-box
+          img.img-responsive(src="img/work_2.jpg", alt="work")
+        .col-md-4.animate-box
+          .mt
+            h3 #{subHeader2}
+            p #{subDescription2}
+            ul.list-nav
+              each val in subList2
+                li=val
+                  i.icon-check2
+  .container.subSections
+    .row.animate-box
+      each section in subSections
+        .col-lg-4.col-md-4
+          div
+            h4 #{section.header}
+            p #{section.description}

@@ -16,9 +16,12 @@ html
                 .display-tc.animate-box(data-animate-effect="fadeIn")
                   h1 #{pageTagline}
                   h2 #{subTagline}
-                    a(href=subTagLink, target="_blank") #{subTagLabel}
+                    a(href=subTagLink, target="_blank") &nbsp;#{subTagLabel}
       include includes/counter.pug
       include includes/aboutSection.pug
+      include includes/photoGallery.pug
+      include includes/testimonial.pug
+      include includes/subscribe.pug
       include includes/footer.pug
     .gototop.js-top
       a(href="#", class="js-gotop")

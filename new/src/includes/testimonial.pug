@@ -1,0 +1,20 @@
+include ../content/testimonial.pug
+
+#fh5co-testimonial.fh5co-bg-section
+  .container
+    .row.animate-box
+      .col-md-6.col-md-offset-3.text-center.fh5co-heading
+        h2 #{TestTitle}
+    .row
+      .col-md-10.col-md-offset-1
+        .row.animate-box
+          .owl-carousel.owl-carousel-fullwidth
+            each person in persons
+              .item
+                .testimony-slide.active.text-center
+                  figure
+                    img(src=person.image, alt="user")
+                  span  #{person.name}, via &nbsp;
+                    a(href=person.link class="facebook") facebook
+                  blockquote
+                    p &ldquo;#{person.quote}&rdquo;

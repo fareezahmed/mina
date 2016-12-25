@@ -1,0 +1,23 @@
+include ../content/photo.pug
+
+.fh5co-project
+  .container
+    .row.animate-box
+      .col-md-8.col-md-offset-2.text-center.fh5co-heading
+        h2 #{photoTitle}
+        p #{photoDescription}
+  .container-fluid.proj-bottom
+    .row
+      each item in photoList
+        .col-md-4.col-sm-6.fh5co-project.animate-box(data-animate-effect="fadeIn")
+          a
+            img.img-responsive(src=item.image, alt=item.alt)
+            h3 #{item.title}
+            span #{item.desc}
+  .container
+    .row
+      .features
+        each section in subSection
+          .col-md-4.animate-box
+            h4 #{section.header}
+            p #{section.desc}
