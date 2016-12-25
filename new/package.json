@@ -1,0 +1,16 @@
+{
+  "name": "mina",
+  "version": "1.0.0",
+  "description": "MINA: Muslim Information Network of Australia website",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Fareez Ahmed",
+  "license": "ISC",
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-jade": "^1.1.0"
+  }
+}
