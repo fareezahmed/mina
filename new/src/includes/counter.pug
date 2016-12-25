@@ -1,0 +1,14 @@
+include ../content/counter.pug
+
+#fh5co-counter.fh5co-counters
+  .container
+    .row
+      .col-md-4.text-center.animate-box
+        span.fh5co-counter.js-counter(data-from="0", data-to=counter1, data-speed="5000", data-refresh-interval="50")
+        span.fh5co-counter-label #{counterLabel1}
+      .col-md-4.text-center.animate-box
+        span.fh5co-counter.js-counter(data-from="0", data-to=counter2, data-speed="5000", data-refresh-interval="50")
+        span.fh5co-counter-label #{counterLabel2}
+      .col-md-4.text-center.animate-box
+        span.fh5co-counter.js-counter(data-from="0", data-to=counter3, data-speed="5000", data-refresh-interval="50")
+        span.fh5co-counter-label #{counterLabel3}

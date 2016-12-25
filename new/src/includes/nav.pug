@@ -1,0 +1,38 @@
+nav.fh5co-nav(role="navigation")
+  .top
+    .container
+      .row
+        .col-xs-12.text-right
+          p.num Call: #{phone}
+          ul.fh5co-social
+            li
+              a(href=facebookUrl)
+                i.icon-facebook
+            li
+              a(href=twitterUrl)
+                i.icon-twitter
+            li
+              a(href=linkedinUrl)
+                i.icon-linkedin
+
+  .top-menu
+    .container
+      .row
+        .col-xs-1
+          #fh5co-logo
+            a(href="index.html")
+              img(src="img/mina-logo.png", alt="MINA logo")
+        .col-xs-11.text-right.menu-1
+          ul
+            //- li(class=index?'active':'')
+            //-   a(href="index.html") Home
+            li(class=about?'active':'')
+              a(href="about.html") About Us
+            li(class=project?'active':'')
+              a(href="project.html") Projects
+            li(class=events?'active':'')
+              a(href="event.html") Events
+            li(class=photo?'active':'')
+              a(href="photo.html") Photo Gallery
+            li(class=contact?'active':'')
+              a(href="contact.html") Contact
