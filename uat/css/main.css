@@ -44,7 +44,8 @@ input {
 
 .fh5co-contact-info ul li {
     white-space: normal;
-    max-width: 300px;
+    max-width: 80%;
+    /* max-width: 300px; */
 }
 
 #fh5co-contact h3 {
