@@ -1153,7 +1153,10 @@ h1, h2, h3, h4, h5, h6, figure {
 }
 
 #fh5co-footer {
-  background: #efefef;
+  background: #222;
+}
+#fh5co-footer h4 {
+  color: #ccc;
 }
 #fh5co-footer .fh5co-footer-links {
   padding: 0;
