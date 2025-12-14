@@ -1,7 +1,280 @@
-// This example displays an address form, using the autocomplete feature
-// of the Google Places API to help users fill in the information.
+// Address autocomplete using OpenStreetMap Nominatim API
+// This replaces Google Maps Places API with a free, open-source alternative
 
-var placeSearch, autocomplete;
+var autocompleteResults = [];
+var currentUserLocation = null;
+var debounceTimer = null;
+var autocompleteDropdown = null;
+
+// Initialize the autocomplete functionality
+function initialize() {
+  var addressInput = document.getElementById('address-search');
+  if (!addressInput) return;
+
+  // Hide address fields initially
+  for (var component in componentForm) {
+    var element = document.getElementById(component);
+    if (element) {
+      element.style.display = 'none';
+      element.disabled = true;
+    }
+  }
+
+  // Create autocomplete dropdown
+  createAutocompleteDropdown();
+
+  // Add event listeners
+  addressInput.addEventListener('input', handleInput);
+  addressInput.addEventListener('keydown', handleKeyDown);
+  addressInput.addEventListener('blur', function() {
+    // Delay hiding dropdown to allow click events
+    setTimeout(function() {
+      hideAutocompleteDropdown();
+    }, 200);
+  });
+
+  // Get user location for biasing results to Australia
+  geolocate();
+}
+
+// Create the autocomplete dropdown element
+function createAutocompleteDropdown() {
+  var addressInput = document.getElementById('address-search');
+  if (!addressInput) return;
+
+  autocompleteDropdown = document.createElement('div');
+  autocompleteDropdown.id = 'autocomplete-dropdown';
+  autocompleteDropdown.className = 'autocomplete-dropdown';
+  addressInput.parentNode.appendChild(autocompleteDropdown);
+}
+
+// Show autocomplete dropdown
+function showAutocompleteDropdown() {
+  if (autocompleteDropdown) {
+    autocompleteDropdown.style.display = 'block';
+  }
+}
+
+// Hide autocomplete dropdown
+function hideAutocompleteDropdown() {
+  if (autocompleteDropdown) {
+    autocompleteDropdown.style.display = 'none';
+  }
+}
+
+// Handle input changes with debouncing
+function handleInput(event) {
+  var query = event.target.value.trim();
+  
+  // Clear previous timer
+  if (debounceTimer) {
+    clearTimeout(debounceTimer);
+  }
+
+  // If query is too short, hide dropdown
+  if (query.length < 3) {
+    hideAutocompleteDropdown();
+    return;
+  }
+
+  // Debounce API calls
+  debounceTimer = setTimeout(function() {
+    searchAddresses(query);
+  }, 300);
+}
+
+// Handle keyboard navigation
+function handleKeyDown(event) {
+  var items = autocompleteDropdown.querySelectorAll('.autocomplete-item');
+  var selectedItem = autocompleteDropdown.querySelector('.autocomplete-item.selected');
+  var selectedIndex = -1;
+
+  if (selectedItem) {
+    selectedIndex = Array.from(items).indexOf(selectedItem);
+  }
+
+  switch(event.key) {
+    case 'ArrowDown':
+      event.preventDefault();
+      selectedIndex = (selectedIndex + 1) % items.length;
+      selectAutocompleteItem(items[selectedIndex]);
+      break;
+    case 'ArrowUp':
+      event.preventDefault();
+      selectedIndex = selectedIndex <= 0 ? items.length - 1 : selectedIndex - 1;
+      selectAutocompleteItem(items[selectedIndex]);
+      break;
+    case 'Enter':
+      event.preventDefault();
+      if (selectedItem) {
+        selectAddress(selectedItem.dataset.index);
+      }
+      break;
+    case 'Escape':
+      hideAutocompleteDropdown();
+      break;
+  }
+}
+
+// Select an autocomplete item visually
+function selectAutocompleteItem(item) {
+  var items = autocompleteDropdown.querySelectorAll('.autocomplete-item');
+  items.forEach(function(i) { i.classList.remove('selected'); });
+  if (item) {
+    item.classList.add('selected');
+    item.scrollIntoView({ block: 'nearest' });
+  }
+}
+
+// Search addresses using Nominatim API
+function searchAddresses(query) {
+  // Build Nominatim API URL
+  // Restrict to Australia and limit results
+  var url = 'https://nominatim.openstreetmap.org/search?';
+  var params = new URLSearchParams({
+    q: query,
+    format: 'json',
+    addressdetails: '1',
+    limit: '5',
+    countrycodes: 'au', // Restrict to Australia
+    'accept-language': 'en'
+  });
+
+  // Add location bias if available
+  if (currentUserLocation) {
+    params.append('viewbox', 
+      (currentUserLocation.lon - 1) + ',' + 
+      (currentUserLocation.lat - 1) + ',' + 
+      (currentUserLocation.lon + 1) + ',' + 
+      (currentUserLocation.lat + 1));
+    params.append('bounded', '1');
+  }
+
+  // Make API request
+  // Note: Browsers don't allow custom User-Agent headers, but Nominatim
+  // will identify the request from the Referer header when hosted on S3
+  fetch(url + params.toString(), {
+    method: 'GET',
+    mode: 'cors'
+  })
+  .then(function(response) {
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return response.json();
+  })
+  .then(function(data) {
+    autocompleteResults = data;
+    displayAutocompleteResults(data);
+  })
+  .catch(function(error) {
+    console.error('Error fetching addresses:', error);
+    hideAutocompleteDropdown();
+  });
+}
+
+// Display autocomplete results
+function displayAutocompleteResults(results) {
+  if (!autocompleteDropdown || results.length === 0) {
+    hideAutocompleteDropdown();
+    return;
+  }
+
+  autocompleteDropdown.innerHTML = '';
+  
+  results.forEach(function(result, index) {
+    var item = document.createElement('div');
+    item.className = 'autocomplete-item';
+    item.dataset.index = index;
+    item.textContent = result.display_name;
+    item.addEventListener('click', function() {
+      selectAddress(index);
+    });
+    item.addEventListener('mouseenter', function() {
+      selectAutocompleteItem(item);
+    });
+    autocompleteDropdown.appendChild(item);
+  });
+
+  showAutocompleteDropdown();
+}
+
+// Select an address and fill the form
+function selectAddress(index) {
+  if (index < 0 || index >= autocompleteResults.length) return;
+
+  var result = autocompleteResults[index];
+  var address = result.address || {};
+
+  // Show and enable all address fields
+  for (var component in componentForm) {
+    var element = document.getElementById(component);
+    if (element) {
+      element.style.display = 'block';
+      element.disabled = false;
+      element.value = '';
+    }
+  }
+
+  // Map Nominatim address components to form fields
+  // Nominatim uses different field names than Google Places
+  var streetNumber = address.house_number || '';
+  var streetName = address.road || '';
+  var suburb = address.suburb || address.city_district || address.town || address.village || '';
+  var state = address.state || '';
+  var postcode = address.postcode || '';
+
+  // Fill in the form fields
+  var streetNumberEl = document.getElementById('street_number');
+  var routeEl = document.getElementById('route');
+  var localityEl = document.getElementById('locality');
+  var stateEl = document.getElementById('administrative_area_level_1');
+  var postcodeEl = document.getElementById('postal_code');
+
+  if (streetNumberEl) streetNumberEl.value = streetNumber;
+  if (routeEl) routeEl.value = streetName;
+  if (localityEl) localityEl.value = suburb;
+  if (stateEl) stateEl.value = state;
+  if (postcodeEl) postcodeEl.value = postcode;
+
+  // Update the search input with the selected address
+  var addressInput = document.getElementById('address-search');
+  if (addressInput) {
+    addressInput.value = result.display_name;
+  }
+
+  hideAutocompleteDropdown();
+}
+
+// Geolocate user for biasing search results
+function geolocate() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      function(position) {
+        currentUserLocation = {
+          lat: position.coords.latitude,
+          lon: position.coords.longitude
+        };
+      },
+      function(error) {
+        console.log('Geolocation not available or denied:', error);
+        // Default to Australia center if geolocation fails
+        currentUserLocation = {
+          lat: -25.2744,
+          lon: 133.7751
+        };
+      }
+    );
+  } else {
+    // Default to Australia center if geolocation not supported
+    currentUserLocation = {
+      lat: -25.2744,
+      lon: 133.7751
+    };
+  }
+}
+
+// Component form mapping (kept for compatibility)
 var componentForm = {
   street_number: 'short_name',
   route: 'long_name',
@@ -10,81 +283,7 @@ var componentForm = {
   postal_code: 'short_name'
 };
 
-function initialize() {
-  // Create the autocomplete object, restricting the search
-  // to geographical location types.
-  autocomplete = new google.maps.places.Autocomplete(
-      /** @type {HTMLInputElement} */(document.getElementById('address-search')),
-      { componentRestrictions: { country: ["au"] }, types: ['geocode'] });
-  // When the user selects an address from the dropdown,
-  // populate the address fields in the form.
-  for (var component in componentForm) {
-    document.getElementById(component).style.display = 'none';
-    document.getElementById(component).disabled = true;
-  }
-
-  google.maps.event.addListener(autocomplete, 'place_changed', fillInAddress);
-}
-
-// [START region_fillform]
-function fillInAddress() {
-    try {
-      // Get the place details from the autocomplete object.
-      var place = autocomplete.getPlace();
-    
-      for (var component in componentForm) {
-        document.getElementById(component).style.display = 'block';
-        document.getElementById(component).value = '';
-        document.getElementById(component).disabled = false;
-      }
-    
-      // Get each component of the address from the place details
-      // and fill the corresponding field on the form.
-      for (var i = 0; i < place.address_components.length; i++) {
-        var addressType = place.address_components[i].types[0];
-        if (componentForm[addressType]) {
-          var val = place.address_components[i][componentForm[addressType]];
-          document.getElementById(addressType).value = val;
-        }
-      }
-    } catch (error) {
-      console.error(error);
-      // Expected output: ReferenceError
-      document.getElementById('address-search').disabled = true;
-      for (var component in componentForm) {
-        document.getElementById(component).style.display = 'block';
-        document.getElementById(component).value = '';
-        document.getElementById(component).disabled = false;
-      }
-    }
-  }
-  // [END region_fillform]
-
-// [START region_geolocation]
-// Bias the autocomplete object to the user's geographical location,
-// as supplied by the browser's 'navigator.geolocation' object.
-function geolocate() {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(function(position) {
-      var geolocation = new google.maps.LatLng(
-          position.coords.latitude, position.coords.longitude);
-      var circle = new google.maps.Circle({
-        center: geolocation,
-        radius: position.coords.accuracy
-      });
-      autocomplete.setBounds(circle.getBounds());
-    });
-  } else {
-    document.getElementById('address-search').disabled = true;
-    for (var component in componentForm) {
-      document.getElementById(component).style.display = 'block';
-      document.getElementById(component).value = '';
-      document.getElementById(component).disabled = false;
-    }
-  }
-}
-
+// Initialize on page load
 window.onload = function() {
-    initialize();
-}
-// [END region_geolocation]
+  initialize();
+};
