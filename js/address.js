@@ -5,6 +5,8 @@ var autocompleteResults = [];
 var currentUserLocation = null;
 var debounceTimer = null;
 var autocompleteDropdown = null;
+var lastRequestTime = 0;
+var isRateLimited = false;
 
 // Initialize the autocomplete functionality
 function initialize() {
@@ -127,7 +129,29 @@ function selectAutocompleteItem(item) {
 }
 
 // Search addresses using Nominatim API
+// Nominatim has a rate limit of 1 request per second
 function searchAddresses(query) {
+  // Check if we're currently rate limited - silently skip if so
+  if (isRateLimited) {
+    hideAutocompleteDropdown();
+    return;
+  }
+
+  var now = Date.now();
+  var timeSinceLastRequest = now - lastRequestTime;
+
+  // Enforce 1 request per second (1000ms minimum between requests)
+  if (timeSinceLastRequest < 1000) {
+    var delay = 1000 - timeSinceLastRequest;
+    setTimeout(function() {
+      searchAddresses(query);
+    }, delay);
+    return;
+  }
+
+  // Update last request time
+  lastRequestTime = now;
+
   // Build Nominatim API URL
   // Restrict to Australia and limit results
   var url = 'https://nominatim.openstreetmap.org/search?';
@@ -158,9 +182,21 @@ function searchAddresses(query) {
     mode: 'cors'
   })
   .then(function(response) {
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
+    // Check for rate limiting (429 Too Many Requests)
+    if (response.status === 429) {
+      isRateLimited = true;
+      // Reset rate limit flag after 60 seconds
+      setTimeout(function() {
+        isRateLimited = false;
+      }, 60000);
+      throw new Error('RATE_LIMIT');
     }
+    // Check for other HTTP errors
+    if (!response.ok) {
+      throw new Error('API_ERROR_' + response.status);
+    }
+    // Reset rate limit flag on successful request
+    isRateLimited = false;
     return response.json();
   })
   .then(function(data) {
@@ -168,8 +204,10 @@ function searchAddresses(query) {
     displayAutocompleteResults(data);
   })
   .catch(function(error) {
+    // Silently handle errors - user can still enter address manually
     console.error('Error fetching addresses:', error);
     hideAutocompleteDropdown();
+    // Don't block user - they can continue typing and enter address manually
   });
 }
 

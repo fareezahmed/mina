@@ -229,6 +229,28 @@
     border-bottom: none;
   }
 
+  .autocomplete-item.autocomplete-error {
+    color: #d9534f;
+    background-color: #f2dede;
+    cursor: default;
+    font-weight: 500;
+  }
+
+  .autocomplete-item.autocomplete-error:hover {
+    background-color: #f2dede;
+    color: #d9534f;
+  }
+
+  .autocomplete-item.autocomplete-error.rate-limit {
+    color: #f0ad4e;
+    background-color: #fcf8e3;
+  }
+
+  .autocomplete-item.autocomplete-error.rate-limit:hover {
+    background-color: #fcf8e3;
+    color: #f0ad4e;
+  }
+
   .contact-form .input-box {
     position: relative;
   }
